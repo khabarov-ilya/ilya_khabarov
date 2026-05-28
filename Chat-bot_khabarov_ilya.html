@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ru" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Илья Хабаров — Product/Delivery Manager Chatbot</title>
+    <!-- Google Fonts: Inter & Bebas Neue -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        bebas: ['Bebas Neue', 'sans-serif'],
+                    },
+                    colors: {
+                        tg: {
+                            bg: '#0e1621',
+                            panel: '#17212b',
+                            bubbleIn: '#182533',
+                            bubbleOut: '#2b5278',
+                            blue: '#2481cc',
+                            blueHover: '#2891e6',
+                            text: '#f5f6f7',
+                            sub: '#7f91a4',
+                            online: '#4cb4e7',
+                            border: '#101924'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Скрытие полосы прокрутки для кастомного скролла */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* Анимация появления сообщений */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="bg-[#070b12] text-tg-text h-full flex items-center justify-center font-sans antialiased overflow-hidden relative">
+
+    <!-- Фоновый интерактивный Canvas -->
+    <canvas id="bg-canvas" class="absolute inset-0 w-full h-full z-0 block"></canvas>
+
+    <!-- Основной контейнер-оболочка (Telegram Desktop / Mobile) с эффектом размытия заднего фона -->
+    <div class="w-full h-full md:h-[92vh] md:max-w-4xl md:rounded-2xl md:shadow-[0_20px_60px_rgba(0,0,0,0.8)] md:border md:border-slate-800/40 bg-tg-bg/90 backdrop-blur-xl flex flex-col overflow-hidden relative z-10">
+        
+        <!-- Шапка чата (Telegram Header) -->
+        <header class="bg-tg-panel/95 backdrop-blur-md px-4 py-3 flex items-center justify-between border-b border-tg-border z-10 shrink-0 select-none">
+            <div class="flex items-center space-x-3">
+                <!-- Аватарка -->
+                <div class="relative w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-sky-400 flex items-center justify-center text-white font-bold text-sm tracking-wide shadow-md">
+                    ИХ
+                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-tg-panel rounded-full animate-pulse"></span>
+                </div>
+                <!-- Инфо -->
+                <div>
+                    <h1 class="font-semibold text-sm leading-tight tracking-wide flex items-center">
+                        Илья Хабаров
+                        <span class="ml-2 px-1.5 py-0.5 bg-tg-blue/20 text-tg-online text-[9px] font-bold rounded uppercase tracking-wider">В поиске</span>
+                    </h1>
+                    <p class="text-tg-sub text-xs mt-0.5">Product / Delivery Manager</p>
+                </div>
+            </div>
+            
+            <!-- Правые кнопки управления -->
+            <div class="flex items-center space-x-3 text-tg-sub">
+                <!-- Кнопка Telegram-статуса -->
+                <div class="hidden sm:flex items-center text-[11px] bg-slate-800/40 px-2.5 py-1 rounded-full border border-slate-700/30 text-tg-online">
+                    <span class="w-1.5 h-1.5 rounded-full bg-tg-online mr-1.5"></span> Активен в 2026 году
+                </div>
+                <!-- Симулированный контакт -->
+                <a href="https://t.me/khabarov_i" target="_blank" class="p-2 hover:bg-slate-800/50 rounded-full text-tg-blue transition-colors" title="Написать напрямую">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15.15-.31.33-.46.51-1.12 1.34-2.23 2.68-3.32 4.05-.33.42-.65.85-.97 1.28-.24.32-.48.65-.72.97-.13.18-.28.27-.5.23-.21-.04-.32-.19-.41-.36-.45-.88-.9-1.76-1.35-2.64-.1-.19-.21-.38-.32-.57-.15-.26-.1-.5.16-.62.24-.11.45-.02.6.21.31.48.62.96.93 1.44.09.14.18.27.27.41.05.08.11.08.16 0 .53-.78 1.07-1.56 1.6-2.34.82-1.2 1.64-2.4 2.47-3.6.14-.2.3-.34.54-.3.23.04.38.19.41.41.03.22-.05.41-.21.57z"/>
+                    </svg>
+                </a>
+            </div>
+        </header>
+
+        <!-- Окно сообщений (Scrollable Chat Container) -->
+        <main id="chat-messages" class="flex-1 overflow-y-auto px-4 py-6 space-y-4 no-scrollbar relative">
+            
+            <!-- Водяной знак Telegram-фона (геометрическая сетка поверх канваса для глубины) -->
+            <div class="absolute inset-0 opacity-[0.01] pointer-events-none" 
+                 style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 20px 20px;"></div>
+
+            <!-- Исходное приветствие бота -->
+            <div class="flex items-start space-x-2.5 max-w-[85%] animate-fade-in relative z-10">
+                <!-- Круглый аватар -->
+                <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-sky-400 flex items-center justify-center text-white font-bold text-xs shrink-0 select-none">
+                    ИХ
+                </div>
+                <!-- Текст сообщения -->
+                <div class="bg-tg-bubbleIn/95 p-4 rounded-2xl rounded-tl-none text-sm leading-relaxed shadow-md border border-slate-800/30">
+                    <p class="font-semibold text-tg-online mb-2">Илья Хабаров · Бот-Ассистент</p>
+                    Приветствую! На связи Илья — <strong>Product / Delivery Manager</strong>. 🚀<br><br>
+                    Я специализируюсь на управлении ИТ-производством, наведении порядка в процессах и сокращении Time-to-Market.<br><br>
+                    <strong>Кратко о результатах:</strong><br><br>
+                    🔹 <strong>ООО «Тархан»:</strong> Руковожу командой из 9 человек. Поднял предсказуемость релизов до <strong>90–95%</strong>, сократил Cycle Time на <strong>20%</strong>. Автоматизировал рутину через LLM, снизив Bug Rate на <strong>27%</strong>.<br><br>
+                    🔹 <strong>ОАО «РЖД»:</strong> Координировал до 5–7 параллельных интеграционных стримов. Контролировал исполнение бюджетов до <strong>300 млн руб.</strong> и удержание SLA <strong>99.9%</strong> в условиях жесткого комплаенса.<br><br>
+                    🔹 <strong>E-com трансформация:</strong> Перевел розничный сбыт в онлайн (включая работу с агрегаторами доставки), обеспечив рост оборота направления на <strong>70% за 6 месяцев</strong>.<br><br>
+                    💼 <strong>Беру на себя:</strong> Операционный контроль над проектом, риски, сроки, бэклог и выстраивание ритмичной работы разработки.<br><br>
+                    📍 Базируюсь в Самаре (удаленка/гибрид), готов к частым командировкам.<br><br>
+                    Выберите интересующий вас раздел ниже, чтобы познакомиться с моим опытом и метриками подробнее! 👇
+                    <span class="block text-right text-[10px] text-tg-sub mt-2 select-none">12:16</span>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Индикатор печати бота ("печатает...") -->
+        <div id="typing-indicator" class="hidden px-6 py-2 shrink-0 select-none">
+            <div class="flex items-center space-x-2 text-tg-sub text-xs bg-tg-panel/40 w-fit px-3 py-1.5 rounded-full border border-slate-800/40">
+                <span class="flex space-x-1">
+                    <span class="w-1.5 h-1.5 bg-tg-online rounded-full animate-bounce" style="animation-delay: 0.1s"></span>
+                    <span class="w-1.5 h-1.5 bg-tg-online rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
+                    <span class="w-1.5 h-1.5 bg-tg-online rounded-full animate-bounce" style="animation-delay: 0.3s"></span>
+                </span>
+                <span>Бот готовит ответ...</span>
+            </div>
+        </div>
+
+        <!-- Нижняя панель с кнопками опций и вводом (Telegram Footer) -->
+        <footer class="bg-tg-panel/95 backdrop-blur-md p-3 border-t border-tg-border shrink-0 z-10">
+            <!-- Сетка 4 ключевых интерактивных кнопок быстрого ответа -->
+            <div class="grid grid-cols-2 gap-2 max-w-2xl mx-auto">
+                <button onclick="handleOption(1, '💼 Опыт & Достижения')" class="py-2.5 px-3 bg-slate-800/90 hover:bg-slate-750 active:bg-slate-800 text-xs font-semibold rounded-xl text-left border border-slate-700/40 hover:border-tg-blue/40 transition-all flex items-center space-x-2 truncate">
+                    <span>💼</span>
+                    <span class="truncate">Опыт & Достижения</span>
+                </button>
+                <button onclick="handleOption(2, '📊 Метрики на текущем месте работы')" class="py-2.5 px-3 bg-slate-800/90 hover:bg-slate-750 active:bg-slate-800 text-xs font-semibold rounded-xl text-left border border-slate-700/40 hover:border-tg-blue/40 transition-all flex items-center space-x-2 truncate">
+                    <span>📊</span>
+                    <span class="truncate">Метрики на текущем месте работы</span>
+                </button>
+                <button onclick="handleOption(3, '🛠 Стек & Компетенции')" class="py-2.5 px-3 bg-slate-800/90 hover:bg-slate-750 active:bg-slate-800 text-xs font-semibold rounded-xl text-left border border-slate-700/40 hover:border-tg-blue/40 transition-all flex items-center space-x-2 truncate">
+                    <span>🛠</span>
+                    <span class="truncate">Стек & Компетенции</span>
+                </button>
+                <button onclick="handleOption(4, '📞 Контакты и Оффер')" class="py-2.5 px-3 bg-slate-800/90 hover:bg-slate-750 active:bg-slate-800 text-xs font-semibold rounded-xl text-left border border-slate-700/40 hover:border-tg-blue/40 transition-all flex items-center space-x-2 truncate">
+                    <span>📞</span>
+                    <span class="truncate">Контакты и Оффер</span>
+                </button>
+            </div>
+            
+            <!-- Имитация текстового поля ввода (для визуальной эстетики) -->
+            <div class="mt-2.5 max-w-2xl mx-auto flex items-center bg-slate-900/90 border border-slate-800 rounded-full px-4 py-1.5">
+                <svg class="w-5 h-5 text-tg-sub shrink-0 cursor-not-allowed" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <input type="text" placeholder="Задайте вопрос через кнопки быстрого ответа..." class="bg-transparent text-xs text-tg-text outline-none px-3 py-1 w-full placeholder-tg-sub cursor-not-allowed" disabled>
+                <button class="text-tg-blue hover:text-tg-blueHover transition-colors cursor-not-allowed shrink-0" disabled>
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                </button>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Шаблоны ответов (скрыты в JS) -->
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const typingIndicator = document.getElementById('typing-indicator');
+
+        // Базовые данные ответов бота
+        const answers = {
+            1: `
+                <div class="space-y-4 text-sm">
+                    <p class="font-bold text-tg-online text-base border-b border-slate-800/60 pb-1.5 flex items-center">
+                        <span>💼 УПРАВЛЕНЧЕСКИЙ ОПЫТ (11 ЛЕТ)</span>
+                    </p>
+                    
+                    <!-- ООО Тархан -->
+                    <div class="relative pl-4 border-l-2 border-tg-blue">
+                        <div class="flex items-center justify-between flex-wrap gap-1">
+                            <h4 class="font-bold text-white text-sm">ООО "Тархан" · Delivery / Product Manager</h4>
+                            <span class="text-[10px] bg-tg-blue/20 text-tg-online px-2 py-0.5 rounded-full font-semibold">Май 2025 - Н.В. (1 год)</span>
+                        </div>
+                        <p class="text-xs text-tg-sub mt-1">Управление полным циклом IT-производства в Scrum-команде (9 инженеров: Backend, Frontend, QA, UI/UX, Аналитика).</p>
+                        <ul class="list-disc list-inside text-xs mt-2 space-y-1 text-slate-300">
+                            <li><strong class="text-white">Инновация:</strong> Спроектировал и внедрил в пайплайн <strong class="text-tg-online">локальные (self-hosted) LLM-модели</strong> для автогенерации ТЗ и артефактов. Это сократило возврат задач и багов на <strong class="text-tg-online">27%</strong>, а подготовку документов ускорило на <strong class="text-tg-online">30%</strong>.</li>
+                            <li>Повысил прозрачность процессов разработки на <strong class="text-white">47%</strong> за счёт точной кастомизации OpenProject/Jira и настройки сквозных статусов.</li>
+                            <li>Увеличил предсказуемость спринтов до <strong class="text-white">90-95%</strong>.</li>
+                        </ul>
+                    </div>
+
+                    <!-- FMCG & Retail -->
+                    <div class="relative pl-4 border-l-2 border-emerald-500">
+                        <div class="flex items-center justify-between flex-wrap gap-1">
+                            <h4 class="font-bold text-white text-sm">ГК (FMCG, Автобизнес, E-commerce) · PM</h4>
+                            <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-semibold">Фев 2023 - Май 2025 (2 года 3 месяца)</span>
+                        </div>
+                        <p class="text-xs text-tg-sub mt-1">Цифровая трансформация активов розничной сети («Фабрика Качества») и e-com направления.</p>
+                        <ul class="list-disc list-inside text-xs mt-2 space-y-1 text-slate-300">
+                            <li>Реализовал проект <strong class="text-white">интеграции торговых точек с агрегатором «Яндекс.Еда»</strong>.</li>
+                            <li>С нуля запустил онлайн-продажи (D2C) на маркетплейсах Ozon и WB, выстроил логистику (FBS/FBO) — <strong class="text-emerald-400">рост продаж на 70% за 6 месяцев</strong>.</li>
+                            <li>Руководил масштабированием: запуск 4 новых магазинов и модернизация 3 точек "под ключ".</li>
+                        </ul>
+                    </div>
+
+                    <!-- РЖД -->
+                    <div class="relative pl-4 border-l-2 border-red-500">
+                        <div class="flex items-center justify-between flex-wrap gap-1">
+                            <h4 class="font-bold text-white text-sm">ОАО «РЖД» · Enterprise Project Manager</h4>
+                            <span class="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-semibold">Авг 2015 - Фев 2024 (8 лет 6 месяцев)</span>
+                        </div>
+                        <p class="text-xs text-tg-sub mt-1">Прошел путь от инженера до руководителя проектного направления инновационного центра РЖД.</p>
+                        <ul class="list-disc list-inside text-xs mt-2 space-y-1 text-slate-300">
+                            <li>Координировал интеграции изменений сразу в <strong class="text-white">5 параллельных стримах</strong> в сверхконсервативной ИБ-среде.</li>
+                            <li>Управлял <strong class="text-white">ИТ-бюджетами (CAPEX/OPEX) до 300+ млн руб.</strong>, вел договоры с внешними контрагентами, контролировал комплаенс и ГОСТ 34.</li>
+                            <li>Удерживал <strong class="text-white">SLA критических систем на уровне 99.9%</strong>.</li>
+                            <li>Курировал апробацию более 50 инновационных внешних проектов для РЖД.</li>
+                        </ul>
+                    </div>
+                </div>
+            `,
+            2: `
+                <div class="space-y-4 text-sm w-full">
+                    <p class="font-bold text-tg-online text-base border-b border-slate-800/60 pb-1.5 flex items-center">
+                        <span>📊 ОТЧЁТ ОБ ЭФФЕКТИВНОСТИ · НА ТЕКУЩЕМ МЕСТЕ РАБОТЫ</span>
+                    </p>
+                    
+                    <!-- Ключевые метрики в виде плиток -->
+                    <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-xl text-center">
+                            <span class="block text-[9px] text-tg-sub uppercase font-bold tracking-wider">Закрыто задач</span>
+                            <span class="font-bebas text-3xl text-tg-blue leading-tight">857</span>
+                            <span class="block text-[9px] text-emerald-400 mt-1">68% completion rate</span>
+                        </div>
+                        <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-xl text-center">
+                            <span class="block text-[9px] text-tg-sub uppercase font-bold tracking-wider">Медиана Cycle Time</span>
+                            <span class="font-bebas text-3xl text-emerald-400 leading-tight">18 дней</span>
+                            <span class="block text-[9px] text-emerald-400 mt-1">-89% к базовому</span>
+                        </div>
+                        <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-xl text-center">
+                            <span class="block text-[9px] text-tg-sub uppercase font-bold tracking-wider">Общая выработка</span>
+                            <span class="font-bebas text-3xl text-white leading-tight">6 793 ч</span>
+                            <span class="block text-[9px] text-slate-400 mt-1">8 специалистов</span>
+                        </div>
+                        <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-xl text-center">
+                            <span class="block text-[9px] text-tg-sub uppercase font-bold tracking-wider">Рекорд (Апр '26)</span>
+                            <span class="font-bebas text-3xl text-orange-400 leading-tight">142</span>
+                            <span class="block text-[9px] text-orange-400 mt-1">после ухода Senior</span>
+                        </div>
+                    </div>
+
+                    <!-- Интерактивная диаграмма закрытых задач по месяцам -->
+                    <div class="bg-slate-900/60 border border-slate-800/80 rounded-xl p-3">
+                        <span class="block text-[10px] text-tg-sub font-bold uppercase tracking-wider mb-3">Закрытые задачи по месяцам (Динамика воркфлоу)</span>
+                        <div class="flex items-end justify-between gap-1.5 h-28 pt-2">
+                            <div class="flex-1 flex flex-col items-center h-full justify-end">
+                                <span class="text-[9px] text-slate-400 mb-1">58</span>
+                                <div class="w-full bg-slate-700/60 rounded-t" style="height: 35%"></div>
+                                <span class="text-[8px] text-tg-sub mt-1.5 scale-90">Май '25</span>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center h-full justify-end">
+                                <span class="text-[9px] text-slate-400 mb-1">22</span>
+                                <div class="w-full bg-slate-700/40 rounded-t" style="height: 14%"></div>
+                                <span class="text-[8px] text-tg-sub mt-1.5 scale-90">Июн</span>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center h-full justify-end">
+                                <span class="text-[9px] text-slate-400 mb-1">32</span>
+                                <div class="w-full bg-slate-700/40 rounded-t" style="height: 20%"></div>
+                                <span class="text-[8px] text-tg-sub mt-1.5 scale-90">Авг</span>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center h-full justify-end">
+                                <span class="text-[9px] text-slate-400 mb-1">49</span>
+                                <div class="w-full bg-slate-700/60 rounded-t" style="height: 30%"></div>
+                                <span class="text-[8px] text-tg-sub mt-1.5 scale-90">Сен</span>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center h-full justify-end">
+                                <span class="text-[9px] text-tg-sub mb-1">74</span>
+                                <div class="w-full bg-tg-blue/50 rounded-t" style="height: 46%"></div>
+                                <span class="text-[8px] text-tg-blue mt-1.5 scale-90 font-bold">Окт</span>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center h-full justify-end">
+                                <span class="text-[9px] text-tg-online mb-1 font-bold">159</span>
+                                <div class="w-full bg-tg-blue rounded-t" style="height: 100%"></div>
+                                <span class="text-[8px] text-tg-online mt-1.5 scale-90 font-bold">Ноя'25</span>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center h-full justify-end">
+                                <span class="text-[9px] text-slate-400 mb-1">93</span>
+                                <div class="w-full bg-slate-700/60 rounded-t" style="height: 58%"></div>
+                                <span class="text-[8px] text-tg-sub mt-1.5 scale-90">Дек</span>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center h-full justify-end">
+                                <span class="text-[9px] text-slate-400 mb-1">71</span>
+                                <div class="w-full bg-slate-700/60 rounded-t" style="height: 44%"></div>
+                                <span class="text-[8px] text-tg-sub mt-1.5 scale-90">Янв '26</span>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center h-full justify-end">
+                                <span class="text-[9px] text-slate-400 mb-1">92</span>
+                                <div class="w-full bg-slate-700/60 rounded-t" style="height: 57%"></div>
+                                <span class="text-[8px] text-tg-sub mt-1.5 scale-90">Фев</span>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center h-full justify-end">
+                                <span class="text-[9px] text-emerald-400 mb-1">124</span>
+                                <div class="w-full bg-emerald-500/60 rounded-t" style="height: 78%"></div>
+                                <span class="text-[8px] text-emerald-400 mt-1.5 scale-90">Мар</span>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center h-full justify-end">
+                                <span class="text-[9px] text-orange-400 mb-1 font-bold">142 ▲</span>
+                                <div class="w-full bg-orange-500 rounded-t" style="height: 89%"></div>
+                                <span class="text-[8px] text-orange-400 mt-1.5 scale-90 font-bold">Апр'26</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Блок инсайта (Уход сеньора и Bus Factor) -->
+                    <div class="bg-slate-900/50 border-l-2 border-orange-500 p-3 rounded-r-xl text-xs space-y-1.5">
+                        <p class="font-bold text-orange-400">🛡️ Стресс-тест системы и Bus Factor = 0</p>
+                        <p class="text-slate-300 leading-relaxed">
+                            В марте 2026 года команду покинул ведущий сеньор-разработчик. Благодаря настроенному мной автономному воркфлоу, WIP-лимитам и автоматизации рутины, нагрузка перераспределилась автоматически. Процесс не сломался — команда вышла на рекордные <strong>142 закрытые задачи</strong> в апреле!
+                        </p>
+                    </div>
+
+                    <!-- Сравнение Cycle Time -->
+                    <div class="space-y-2 bg-slate-900/40 p-3 rounded-xl border border-slate-800">
+                        <span class="block text-[10px] text-tg-sub font-bold uppercase tracking-wider">Медиана Cycle Time (До и После внедрения воркфлоу)</span>
+                        <div class="space-y-1.5">
+                            <div>
+                                <div class="flex justify-between text-xs mb-0.5"><span class="text-tg-sub">До внедрения воркфлоу</span><span class="text-slate-400">167 дней</span></div>
+                                <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                                    <div class="bg-slate-600 h-full rounded-full" style="width: 100%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-0.5"><span class="text-tg-online font-semibold">После оптимизации</span><span class="text-tg-online font-bold">18 дней (-89%)</span></div>
+                                <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                                    <div class="bg-tg-blue h-full rounded-full" style="width: 11%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            3: `
+                <div class="space-y-4 text-sm">
+                    <p class="font-bold text-tg-online text-base border-b border-slate-800/60 pb-1.5 flex items-center">
+                        <span>🛠 ТЕХНОЛОГИЧЕСКИЙ СТЕК И КОМПЕТЕНЦИИ</span>
+                    </p>
+                    
+                    <!-- Сетка блоков -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-xl">
+                            <span class="block text-xs font-bold text-tg-online mb-2 flex items-center">
+                                <span class="mr-1.5">📈</span> Методологии & Управление
+                            </span>
+                            <div class="flex flex-wrap gap-1.5">
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">Agile / Scrum / Kanban</span>
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">Waterfall / SDLC</span>
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">Lean / Kaizen</span>
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">SAFe / LeSS / PPM</span>
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">Product Discovery</span>
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">User Story Mapping</span>
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">WIP Limits / Flow</span>
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">Release Management</span>
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">RICE / ICE Prioritization</span>
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">SLA / SLO Control</span>
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">Risk Management</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-xl">
+                            <span class="block text-xs font-bold text-tg-online mb-2 flex items-center">
+                                <span class="mr-1.5">🤖</span> ИИ в Процессах (GenAI)
+                            </span>
+                            <p class="text-xs text-slate-300 leading-relaxed mb-2">
+                                Проектирование и интеграция ИИ-инструментов (локальных LLM) в рабочий контур команды.
+                            </p>
+                            <div class="flex flex-wrap gap-1.5">
+                                <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 text-xs rounded-lg">Генерация ТЗ</span>
+                                <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 text-xs rounded-lg">Claude & NotebookLM</span>
+                                <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 text-xs rounded-lg">RAG Архитектуры</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-xl">
+                            <span class="block text-xs font-bold text-tg-online mb-2 flex items-center">
+                                <span class="mr-1.5">🔧</span> Софт & Инструменты
+                            </span>
+                            <div class="flex flex-wrap gap-1.5">
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">Jira (Advanced Roadmaps, JQL)</span>
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">Confluence / Wiki</span>
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">OpenProject / MS Project</span>
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">Figma (базовый) / Miro / Notion</span>
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">Obsidian</span>
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">LLMs (Claude / API)</span>
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">Mattermost</span>
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">Nextcloud</span>
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">Draw.io (BPMN / UML)</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-xl">
+                            <span class="block text-xs font-bold text-tg-online mb-2 flex items-center">
+                                <span class="mr-1.5">📊</span> Метрики & Экономика
+                            </span>
+                            <div class="flex flex-wrap gap-1.5">
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">DORA Metrics (Lead/Cycle Time)</span>
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">Unit-экономика (LTV, CAC, ROMI)</span>
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">P&L & Оценка ROI</span>
+                                <span class="bg-slate-800 px-2.5 py-1 text-xs rounded-lg text-slate-300">SLA & SLO Мониторинг</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            4: `
+                <div class="space-y-4 text-sm">
+                    <p class="font-bold text-tg-online text-base border-b border-slate-800/60 pb-1.5 flex items-center">
+                        <span>📞 КОНТАКТЫ И ЗАРПЛАТНЫЕ ОЖИДАНИЯ</span>
+                    </p>
+                    
+                    <div class="space-y-3">
+                        <div class="bg-slate-900/60 border border-slate-800 p-3.5 rounded-xl space-y-2">
+                            <p class="text-xs text-slate-400">Прямые каналы для связи:</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                <a href="https://t.me/khabarov_i" target="_blank" class="flex items-center space-x-2 bg-tg-blue/10 hover:bg-tg-blue/20 p-2.5 rounded-lg border border-tg-blue/30 text-tg-online transition-all font-semibold">
+                                    <span>✈️ Telegram:</span>
+                                    <span>@khabarov_i</span>
+                                </a>
+                                <a href="tel:+79093434883" class="flex items-center space-x-2 bg-slate-800 hover:bg-slate-750 p-2.5 rounded-lg border border-slate-700/30 text-white transition-all font-semibold">
+                                    <span>📞 Телефон:</span>
+                                    <span>+7 (909) 343-48-83</span>
+                                </a>
+                                <a href="https://www.linkedin.com/in/ilya-khabarov/" target="_blank" class="flex items-center space-x-2 bg-blue-600/10 hover:bg-blue-600/20 p-2.5 rounded-lg border border-blue-600/30 text-blue-400 transition-all font-semibold">
+                                    <span>💼 LinkedIn:</span>
+                                    <span class="truncate">ilya-khabarov</span>
+                                </a>
+                                <a href="https://career.habr.com/khabar7" target="_blank" class="flex items-center space-x-2 bg-emerald-600/10 hover:bg-emerald-600/20 p-2.5 rounded-lg border border-emerald-600/30 text-emerald-400 transition-all font-semibold">
+                                    <span>🚀 Хабр Карьера:</span>
+                                    <span class="truncate">khabar7</span>
+                                </a>
+                            </div>
+                            <p class="text-xs text-slate-400 pt-1">Email: <span class="text-slate-200">khabarov.ilya.smr@icloud.com</span></p>
+                        </div>
+
+                        <div class="bg-slate-900/60 border border-slate-800 p-3.5 rounded-xl space-y-2 text-xs">
+                            <p class="font-bold text-white mb-1.5">💼 Условия & Пожелания:</p>
+                            <ul class="space-y-1.5 text-slate-300 list-disc list-inside">
+                                <li><strong>Роли:</strong> Delivery Manager / Product Manager / Руководитель IT-производства.</li>
+                                <li><strong>Локация & Формат:</strong> Удаленка (базируюсь в Самаре) или гибрид с готовностью к частым командировкам (Москва, СПб).</li>
+                                <li><strong>Целевые домены:</strong> FinTech, BigTech, E-commerce, Логистика, крупные ИТ-компании.</li>
+                                <li><strong>Зарплатный ориентир:</strong> Обсуждаемый диапазон <span class="text-tg-online font-bold">180 000 – 220 000 рублей net</span> (на руки) в зависимости от объема задач, масштаба команд и ответственности.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `
+        };
+
+        // Логика обработки кликов на кнопки быстрого ответа
+        function handleOption(optionId, optionName) {
+            // 1. Очищаем старые активные классы кнопок
+            const buttons = document.querySelectorAll('footer button');
+            buttons.forEach(btn => btn.classList.remove('border-tg-blue', 'text-tg-online'));
+
+            // 2. Добавляем в чат исходящее сообщение пользователя
+            appendMessage(optionName, 'out');
+
+            // 3. Скролл вниз
+            scrollToBottom();
+
+            // 4. Показываем индикатор "Бот печатает..."
+            typingIndicator.classList.remove('hidden');
+            scrollToBottom();
+
+            // 5. Симулируем задержку ответа в 650мс для реалистичности
+            setTimeout(() => {
+                typingIndicator.classList.add('hidden');
+                appendMessage(answers[optionId], 'in');
+                scrollToBottom();
+            }, 650);
+        }
+
+        // Вспомогательная функция добавления сообщения в DOM
+        function appendMessage(content, type) {
+            const msgDiv = document.createElement('div');
+            
+            // Временная метка Telegram
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+            if (type === 'out') {
+                msgDiv.className = 'flex items-start justify-end max-w-[85%] ml-auto animate-fade-in relative z-10';
+                msgDiv.innerHTML = `
+                    <div class="bg-tg-bubbleOut p-3 rounded-2xl rounded-tr-none text-sm leading-relaxed shadow-sm">
+                        <p class="text-slate-100">${content}</p>
+                        <span class="block text-right text-[9px] text-slate-300 mt-1.5 select-none">${timeStr} ✓✓</span>
+                    </div>
+                `;
+            } else {
+                msgDiv.className = 'flex items-start space-x-2.5 max-w-[85%] animate-fade-in relative z-10';
+                msgDiv.innerHTML = `
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-sky-400 flex items-center justify-center text-white font-bold text-xs shrink-0 select-none">
+                        ИХ
+                    </div>
+                    <div class="bg-tg-bubbleIn/95 p-4 rounded-2xl rounded-tl-none text-sm leading-relaxed shadow-md w-full border border-slate-800/40">
+                        ${content}
+                        <span class="block text-right text-[10px] text-tg-sub mt-2 select-none">${timeStr}</span>
+                    </div>
+                `;
+            }
+            
+            chatMessages.appendChild(msgDiv);
+        }
+
+        // Плавный скролл вниз контейнера сообщений
+        function scrollToBottom() {
+            chatMessages.scrollTo({
+                top: chatMessages.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+    </script>
+
+    <!-- JS Логика интерактивного фонового Canvas (Созвездия микрочастиц) -->
+    <script>
+        (function() {
+            const canvas = document.getElementById('bg-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            let particles = [];
+            let maxParticles = window.innerWidth < 768 ? 30 : 75; // Умное количество частиц по типу экрана
+
+            // Функция подстройки разрешения Canvas
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                // Снижаем количество объектов на мобильных устройствах во избежание фризов
+                maxParticles = window.innerWidth < 768 ? 30 : 75;
+                initParticles();
+            }
+
+            // Координаты курсора
+            let mouse = {
+                x: null,
+                y: null,
+                radius: 140
+            };
+
+            // Слушатели событий взаимодействия
+            window.addEventListener('mousemove', function(e) {
+                mouse.x = e.clientX;
+                mouse.y = e.clientY;
+            });
+
+            window.addEventListener('mouseleave', function() {
+                mouse.x = null;
+                mouse.y = null;
+            });
+
+            window.addEventListener('touchmove', function(e) {
+                if (e.touches.length > 0) {
+                    mouse.x = e.touches[0].clientX;
+                    mouse.y = e.touches[0].clientY;
+                }
+            });
+
+            window.addEventListener('touchend', function() {
+                mouse.x = null;
+                mouse.y = null;
+            });
+
+            // Класс Одиночной Частицы
+            class Particle {
+                constructor() {
+                    this.reset();
+                    // Начальная хаотичная расстановка по экрану
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                }
+
+                reset() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    // Минимальная скорость дрейфа для сохранения строгого, премиального стиля
+                    this.vx = (Math.random() - 0.5) * 0.25;
+                    this.vy = (Math.random() - 0.5) * 0.25;
+                    this.radius = Math.random() * 1.5 + 1; // Компактный размер точек
+                    this.alpha = Math.random() * 0.4 + 0.1;
+                }
+
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+
+                    // Отражение от границ экрана
+                    if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                    if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+
+                    // Интерактивное притяжение к курсору
+                    if (mouse.x !== null && mouse.y !== null) {
+                        let dx = mouse.x - this.x;
+                        let dy = mouse.y - this.y;
+                        let distance = Math.sqrt(dx * dx + dy * dy);
+                        if (distance < mouse.radius) {
+                            // Легкое втягивание в поле мыши
+                            const force = (mouse.radius - distance) / mouse.radius;
+                            this.x += (dx / distance) * force * 0.6;
+                            this.y += (dy / distance) * force * 0.6;
+                        }
+                    }
+                }
+
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(36, 129, 204, ${this.alpha})`;
+                    ctx.fill();
+                }
+            }
+
+            // Инициализация пула частиц
+            function initParticles() {
+                particles = [];
+                for (let i = 0; i < maxParticles; i++) {
+                    particles.push(new Particle());
+                }
+            }
+
+            // Отрисовка связующих линий созвездий
+            function drawConnections() {
+                const maxDistance = 120; // Дистанция связки точек
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance < maxDistance) {
+                            // Чем ближе точки друг к другу — тем ярче соединяющая линия
+                            const alpha = (1 - distance / maxDistance) * 0.12;
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.strokeStyle = `rgba(36, 129, 204, ${alpha})`;
+                            ctx.lineWidth = 0.7;
+                            ctx.stroke();
+                        }
+                    }
+
+                    // Отрисовка мягкого интерактивного неонового луча к мыши
+                    if (mouse.x !== null && mouse.y !== null) {
+                        const dx = particles[i].x - mouse.x;
+                        const dy = particles[i].y - mouse.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance < mouse.radius) {
+                            const alpha = (1 - distance / mouse.radius) * 0.16;
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(mouse.x, mouse.y);
+                            // Бирюзово-зеленый стильный оттенок шлейфа
+                            ctx.strokeStyle = `rgba(0, 203, 168, ${alpha})`;
+                            ctx.lineWidth = 0.9;
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+
+            // Бесконечный анимационный цикл
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Рендерим и обновляем каждую ноду
+                for (let i = 0; i < particles.length; i++) {
+                    particles[i].update();
+                    particles[i].draw();
+                }
+                
+                drawConnections();
+                requestAnimationFrame(animate);
+            }
+
+            // Запуск
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+            animate();
+        })();
+    </script>
+</body>
+</html>
