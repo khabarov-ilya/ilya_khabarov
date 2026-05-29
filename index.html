@@ -120,7 +120,7 @@
                     🔹 <strong>E-com трансформация:</strong> Перевел розничный сбыт в онлайн (включая работу с агрегаторами доставки), обеспечив рост оборота направления на <strong>70% за 6 месяцев</strong>.<br><br>
                     💼 <strong>Беру на себя:</strong> Операционный контроль над проектом, риски, сроки, бэклог и выстраивание ритмичной работы разработки.<br><br>
                     📍 Базируюсь в Самаре (удаленка/гибрид), готов к частым командировкам.<br><br>
-                    Выберите интересующий вас раздел ниже, чтобы познакомиться с моим опытом и метриками подробнее! 👇
+                    Выберите интересующий вас раздел ниже или <strong>напишите свой вопрос в текстовое поле</strong> в самом низу! 👇
                     <span class="block text-right text-[10px] text-tg-sub mt-2 select-none">12:16</span>
                 </div>
             </div>
@@ -161,11 +161,11 @@
                 </button>
             </div>
             
-            <!-- Имитация текстового поля ввода (для визуальной эстетики) -->
-            <div class="mt-2.5 max-w-2xl mx-auto flex items-center bg-slate-900/90 border border-slate-800 rounded-full px-4 py-1.5">
-                <svg class="w-5 h-5 text-tg-sub shrink-0 cursor-not-allowed" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <input type="text" placeholder="Задайте вопрос через кнопки быстрого ответа..." class="bg-transparent text-xs text-tg-text outline-none px-3 py-1 w-full placeholder-tg-sub cursor-not-allowed" disabled>
-                <button class="text-tg-blue hover:text-tg-blueHover transition-colors cursor-not-allowed shrink-0" disabled>
+            <!-- Активное текстовое поле ввода (с возможностью отправки сообщений боту/Илье) -->
+            <div class="mt-2.5 max-w-2xl mx-auto flex items-center bg-slate-900/90 border border-slate-800 rounded-full px-4 py-1.5 focus-within:border-tg-blue/50 transition-colors">
+                <svg class="w-5 h-5 text-tg-sub shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <input id="user-input" type="text" placeholder="Задайте вопрос Илье или оставьте заметку/предложение..." class="bg-transparent text-xs text-tg-text outline-none px-3 py-1 w-full placeholder-tg-sub cursor-text" onkeypress="handleKeyPress(event)">
+                <button id="send-btn" onclick="handleUserInput()" class="text-tg-blue hover:text-tg-blueHover transition-colors cursor-pointer shrink-0">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
                 </button>
             </div>
@@ -251,7 +251,7 @@
                         <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-xl text-center">
                             <span class="block text-[9px] text-tg-sub uppercase font-bold tracking-wider">Общая выработка</span>
                             <span class="font-bebas text-3xl text-white leading-tight">6 793 ч</span>
-                            <span class="block text-[9px] text-slate-400 mt-1">8 специалистов</span>
+                            <span class="block text-[9px] text-slate-400 mt-1">8 specialists</span>
                         </div>
                         <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-xl text-center">
                             <span class="block text-[9px] text-tg-sub uppercase font-bold tracking-wider">Рекорд (Апр '26)</span>
@@ -478,7 +478,7 @@
             // 3. Скролл вниз
             scrollToBottom();
 
-            // 4. Показываем индикатор "Бот печатает..."
+            // 4. Показываем индикатор "Бот готовит ответ..."
             typingIndicator.classList.remove('hidden');
             scrollToBottom();
 
@@ -488,6 +488,74 @@
                 appendMessage(answers[optionId], 'in');
                 scrollToBottom();
             }, 650);
+        }
+
+        // Логика обработки ручного ввода пользователя
+        function handleUserInput() {
+            const inputField = document.getElementById('user-input');
+            const rawText = inputField.value.trim();
+            if (!rawText) return;
+
+            // Стираем текст в инпуте
+            inputField.value = '';
+
+            // Отображаем сообщение пользователя
+            appendMessage(rawText, 'out');
+            scrollToBottom();
+
+            // Показываем индикатор печати
+            typingIndicator.classList.remove('hidden');
+            scrollToBottom();
+
+            setTimeout(() => {
+                typingIndicator.classList.add('hidden');
+
+                const query = rawText.toLowerCase();
+                let botResponse = '';
+
+                // Смарт-парсер ключевых слов
+                if (query.includes('опыт') || query.includes('работа') || query.includes('тархан') || query.includes('ржд') || query.includes('компани') || query.includes('достижен')) {
+                    botResponse = `<div class="mb-2 text-tg-online font-semibold">Найдено совпадение по ключевым словам. Вот информация об опыте Ильи:</div>` + answers[1];
+                } else if (query.includes('метр') || query.includes('эффективн') || query.includes('выработк') || query.includes('задач') || query.includes('диаграмм') || query.includes('анализ')) {
+                    botResponse = `<div class="mb-2 text-tg-online font-semibold">Найдено совпадение по запросу метрик. Загружаю актуальные данные:</div>` + answers[2];
+                } else if (query.includes('стек') || query.includes('технолог') || query.includes('навык') || query.includes('инструмент') || query.includes('jira') || query.includes('llm') || query.includes('obsidian')) {
+                    botResponse = `<div class="mb-2 text-tg-online font-semibold">Найдено совпадение по технологическому стеку:</div>` + answers[3];
+                } else if (query.includes('контакт') || query.includes('связь') || query.includes('почта') || query.includes('телефон') || query.includes('оффер') || query.includes('зарплат') || query.includes('деньги') || query.includes('вилка')) {
+                    botResponse = `<div class="mb-2 text-tg-online font-semibold">Вот прямые контакты для связи и зарплатные ожидания:</div>` + answers[4];
+                } else if (query.includes('привет') || query.includes('здравствуй') || query.includes('добрый день') || query.includes('салют') || query.includes('hi') || query.includes('hello')) {
+                    botResponse = `Приветствую! На связи интеллектуальный ассистент Ильи Хабарова. Вы можете спросить меня напрямую о его опыте, стеке технологий, метриках или контактах, просто написав сообщение. Либо используйте интерактивные кнопки быстрого ответа!`;
+                } else {
+                    // Ответ-заметка в случае произвольного текста
+                    botResponse = `
+                        <div class="space-y-3">
+                            <p class="font-bold text-tg-online text-sm border-b border-slate-800 pb-1 flex items-center">
+                                <span>📥 СООБЩЕНИЕ ИЛЬЕ ЗАПИСАНО</span>
+                            </p>
+                            <p class="text-xs text-slate-300">Ваше сообщение сохранено локально:</p>
+                            <div class="bg-slate-900/60 border border-slate-800 p-2.5 rounded-xl text-xs italic text-slate-100">
+                                "${rawText}"
+                            </div>
+                            <p class="text-xs text-slate-300 leading-relaxed">
+                                Сигнал зафиксирован в системе. Вы можете отправить его напрямую Илье в Telegram, чтобы продолжить живой диалог прямо сейчас:
+                            </p>
+                            <a href="https://t.me/khabarov_i" target="_blank" class="inline-flex items-center space-x-1.5 bg-tg-blue hover:bg-tg-blueHover text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors shadow-sm">
+                                <span>✈️ Написать в Telegram</span>
+                            </a>
+                            <p class="text-[10px] text-tg-sub">А пока вы можете продолжить изучение интерактивного резюме с помощью кнопок быстрого ответа!</p>
+                        </div>
+                    `;
+                }
+
+                appendMessage(botResponse, 'in');
+                scrollToBottom();
+            }, 800);
+        }
+
+        // Отправка сообщений при нажатии Enter
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                handleUserInput();
+            }
         }
 
         // Вспомогательная функция добавления сообщения в DOM
